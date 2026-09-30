@@ -59,7 +59,7 @@ Then navigate to `http://localhost:8080`
 
 The application creates a unique local API key when a user creates an account. The browser stores that key locally and sends it in the `X-API-Key` header for `/generate` requests. To use Google Gemini for multilingual Q&A, set `GOOGLE_API_KEY` on the server. The Google key is never sent to the browser. Without it, the local rule-based generator is used.
 
-Copy `.env.example` to `.env` or set the variables in the shell before starting the server. `TELUGU_QA_ALLOWED_ORIGINS` controls which separately hosted frontends may call the API. Cross-language question generation and the live translation preview use the MyMemory public endpoint and do not require a key; `MYMEMORY_EMAIL` is reserved for an optional provider email if higher limits are needed.
+Copy `.env.example` to `.env` or set the variables in the shell before starting the server. `TELUGU_QA_ALLOWED_ORIGINS` controls which separately hosted frontends may call the API. Cross-language question generation and the live translation preview use MyMemory first, then fall back to Google's public translation endpoint if MyMemory is unavailable; neither requires a key. `MYMEMORY_EMAIL` is reserved for an optional provider email if higher limits are needed.
 
 Password recovery sends a six-digit one-time code by email. Configure `SMTP_HOST`, `SMTP_FROM`, `SMTP_USERNAME`, and `SMTP_PASSWORD` in the local `.env`; for Gmail, use `smtp.gmail.com`, port 587, and a Google App Password (not your regular account password). Set `SMTP_FROM` and `SMTP_USERNAME` to the same Gmail address. The app reloads `.env` settings when a reset is requested. The recovery form reports when SMTP is missing or cannot send, and the server log includes provider errors. Verification codes expire after 10 minutes and are locked after five failed attempts; a new code can be requested after one minute. A successful reset rotates the account API key. New accounts created in the web UI save a recovery email; older accounts need an `email` value added to their entry in `accounts.json` before they can use password recovery.
 
@@ -79,7 +79,7 @@ Password recovery sends a six-digit one-time code by email. Configure `SMTP_HOST
 3. Click "Generate Q&A"
 4. View generated question-answer pairs
 
-When a specific Q&A language is selected, study material is translated to that language before questions are generated. Translation requires the MyMemory public service; if it is unavailable, the app reports the translation error rather than generating questions in the wrong language.
+When a specific Q&A language is selected, study material is translated to that language before questions are generated. If both public translation services are unavailable, the app reports an error rather than generating questions in the wrong language.
 
 ## Sample Input
 

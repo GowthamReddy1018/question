@@ -38,6 +38,34 @@ class TranslationTests(unittest.TestCase):
         self.assertEqual(query["langpair"], ["en|kn"])
         self.assertLessEqual(len(query["q"][0]), 500)
 
+    def test_google_fallback_handles_remaining_chunks_after_mymemory_failure(self):
+        class GoogleResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return json.dumps([[ ["नमस्ते", "Hello", None, None, 1] ], None, "en"]).encode("utf-8")
+
+        source = "word " * 104
+        with patch.object(
+            app,
+            "urlopen",
+            side_effect=[OSError("MyMemory unavailable"), GoogleResponse(), GoogleResponse()],
+        ) as open_url:
+            translated = app.translate_with_provider(source, "en", "hi")
+
+        self.assertEqual(translated, "नमस्ते नमस्ते")
+        self.assertEqual(open_url.call_count, 3)
+        self.assertIn("api.mymemory.translated.net", open_url.call_args_list[0].args[0].full_url)
+        for call in open_url.call_args_list[1:]:
+            self.assertIn("translate.googleapis.com", call.args[0].full_url)
+            query = parse_qs(urlparse(call.args[0].full_url).query)
+            self.assertEqual(query["sl"], ["en"])
+            self.assertEqual(query["tl"], ["hi"])
+
 
 class GenerateLanguageTests(unittest.IsolatedAsyncioTestCase):
     async def test_generation_translates_source_into_selected_language(self):

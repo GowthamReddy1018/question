@@ -251,8 +251,35 @@ def generate_with_google(text: str, language: str, question_count: int, difficul
         raise HTTPException(status_code=502, detail="Google AI could not generate Q&A.") from error
 
 
+def translate_with_google(text: str, source_language: str, target_language: str) -> str:
+    """Use Google's public translation endpoint as a fallback for MyMemory."""
+    query = urlencode({
+        "client": "gtx",
+        "sl": source_language,
+        "tl": target_language,
+        "dt": "t",
+        "q": text,
+    })
+    request = UrlRequest(
+        f"https://translate.googleapis.com/translate_a/single?{query}",
+        headers={"User-Agent": "Mozilla/5.0"},
+    )
+    with urlopen(request, timeout=10) as response:
+        provider_data = json.loads(response.read().decode("utf-8"))
+
+    segments = provider_data[0] if isinstance(provider_data, list) and provider_data else []
+    translated_text = "".join(
+        segment[0]
+        for segment in segments
+        if isinstance(segment, list) and segment and isinstance(segment[0], str)
+    ).strip()
+    if not translated_text:
+        raise ValueError("Google Translate returned no translation.")
+    return translated_text
+
+
 def translate_with_provider(text: str, source_language: str, target_language: str) -> str:
-    """Translate text in provider-sized chunks while preserving the original text on same-language requests."""
+    """Translate chunks with MyMemory and fall back to Google if it is unavailable."""
     if source_language == target_language:
         return text
 
@@ -271,29 +298,43 @@ def translate_with_provider(text: str, source_language: str, target_language: st
         start = end
 
     translated_chunks = []
+    using_google_fallback = False
     for chunk in chunks:
-        query = urlencode({"q": chunk, "langpair": f"{source_code}|{target_code}"})
-        request = UrlRequest(
-            f"https://api.mymemory.translated.net/get?{query}",
-            headers={"User-Agent": "Telugu-QA-Generator/1.0"},
-        )
-        try:
-            with urlopen(request, timeout=12) as response:
-                provider_data = json.loads(response.read().decode("utf-8"))
-        except Exception as error:
-            raise HTTPException(status_code=502, detail="Translation provider is unavailable.") from error
+        if using_google_fallback:
+            try:
+                translated_text = translate_with_google(chunk, source_code, target_code)
+            except Exception as error:
+                raise HTTPException(status_code=502, detail="Translation providers are unavailable.") from error
+        else:
+            query = urlencode({"q": chunk, "langpair": f"{source_code}|{target_code}"})
+            request = UrlRequest(
+                f"https://api.mymemory.translated.net/get?{query}",
+                headers={"User-Agent": "Telugu-QA-Generator/1.0"},
+            )
+            try:
+                with urlopen(request, timeout=12) as response:
+                    provider_data = json.loads(response.read().decode("utf-8"))
 
-        response_data = provider_data.get("responseData") if isinstance(provider_data, dict) else None
-        translated_text = (
-            response_data.get("translatedText")
-            if isinstance(response_data, dict)
-            else None
-        )
-        if not isinstance(translated_text, str):
-            raise HTTPException(status_code=502, detail="Translation provider returned no translation.")
-        translated_text = translated_text.strip()
-        if provider_data.get("responseStatus") != 200 or not translated_text:
-            raise HTTPException(status_code=502, detail="Translation provider returned no translation.")
+                response_data = provider_data.get("responseData") if isinstance(provider_data, dict) else None
+                translated_text = (
+                    response_data.get("translatedText")
+                    if isinstance(response_data, dict)
+                    else None
+                )
+                if provider_data.get("responseStatus") != 200 or not isinstance(translated_text, str) or not translated_text.strip():
+                    raise ValueError("MyMemory returned no translation.")
+                translated_text = translated_text.strip()
+            except Exception as primary_error:
+                try:
+                    translated_text = translate_with_google(chunk, source_code, target_code)
+                    using_google_fallback = True
+                except Exception as fallback_error:
+                    logging.warning(
+                        "Translation providers unavailable (MyMemory: %s; Google: %s).",
+                        type(primary_error).__name__,
+                        type(fallback_error).__name__,
+                    )
+                    raise HTTPException(status_code=502, detail="Translation providers are unavailable.") from fallback_error
         translated_chunks.append(translated_text)
 
     return " ".join(translated_chunks)
