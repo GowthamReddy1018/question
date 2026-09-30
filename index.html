@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Question Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-mark">✦</span><span>Question<br>Generator</span></div>
+            <nav class="nav" aria-label="Main navigation">
+                <button class="nav-item active" data-view="workspace"><span class="nav-icon" aria-hidden="true">⌂</span><span>Workspace</span></button>
+                <button class="nav-item" data-view="history"><span class="nav-icon" aria-hidden="true">◷</span><span>Question history</span></button>
+                <button class="nav-item" data-view="settings"><span class="nav-icon" aria-hidden="true">⚙</span><span>Settings</span></button>
+            </nav>
+            <div class="sidebar-bottom"><div class="model-status"><span></span> AI engine ready</div><button id="logoutBtn" class="quiet-button">Sign out</button></div>
+        </aside>
+        <main class="main-content">
+            <header class="topbar"><div><p class="eyebrow">STUDY STUDIO</p><h1>Turn notes into momentum.</h1></div><div class="account-badge" id="accountBadge" hidden><span id="activeUsername"></span></div></header>
+            <section class="auth-section" id="authSection">
+                <div class="auth-intro"><span class="hero-orbit">✦</span><p class="eyebrow">YOUR PRIVATE STUDY SPACE</p><h2>Learn with better questions.</h2><p>Sign in to turn textbook pages, PDFs, and notes into focused practice papers.</p></div>
+                <div class="auth-tabs" id="authTabs"><button type="button" class="auth-tab active" id="loginTab">Sign in</button><button type="button" class="auth-tab" id="createTab">Create account</button></div>
+                <form id="authForm" class="auth-form"><label for="username">Username</label><input id="username" name="username" type="text" autocomplete="username" minlength="3" required><label for="accountEmail" id="emailLabel" hidden>Email address</label><input id="accountEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" hidden><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required><div class="auth-form-options" id="authFormOptions"><span></span><button type="button" class="link-button" id="forgotPasswordBtn">Forgot password?</button></div><button type="submit" class="primary-button" id="authSubmitBtn">Enter workspace <span>→</span></button></form>
+                <div class="auth-feedback" id="authFeedback" role="alert" aria-live="polite" hidden></div>
+                <section class="recovery-panel" id="recoveryPanel" aria-live="polite" hidden>
+                    <button type="button" class="back-link" id="backToLoginBtn"><span aria-hidden="true">←</span> Back to sign in</button>
+                    <div class="recovery-heading"><span class="recovery-icon" aria-hidden="true">✳</span><p class="eyebrow">ACCOUNT RECOVERY</p><h2>Forgot your password?</h2><p>Enter the email linked to your account. We’ll send a six-digit code to get you back in.</p></div>
+                    <div id="resetRequestView"><form id="resetRequestForm" class="auth-form"><label for="resetEmail">Email address</label><input id="resetEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit" class="primary-button" id="resetRequestBtn">Send verification code <span>→</span></button></form><div class="auth-feedback" id="requestFeedback" role="alert" aria-live="polite" hidden></div><p class="recovery-note">Codes expire after 10 minutes. If no message arrives, check Spam/Junk; email delivery must be configured by the app administrator.</p></div>
+                    <div id="resetSentView" class="recovery-state" hidden><span class="state-mark" aria-hidden="true">✓</span><h3>Check your inbox</h3><p id="resetSentMessage">If an account matches and email recovery is configured, a verification code will arrive shortly.</p><button type="button" class="primary-button" id="enterOtpBtn">Enter verification code <span>→</span></button><button type="button" class="secondary-button" id="resetSentBackBtn">Return to sign in</button></div>
+                    <div id="resetConfirmView" hidden><p class="recovery-step-copy">Enter the six-digit code sent to your email, then choose a new password.</p><form id="resetConfirmForm" class="auth-form"><label for="resetOtp">Email verification code</label><input id="resetOtp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" required><label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" required><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Enter it one more time" required><button type="submit" class="primary-button" id="resetConfirmBtn">Update password <span>→</span></button></form><div class="auth-feedback" id="recoveryFeedback" role="alert" aria-live="polite" hidden></div></div>
+                    <div id="resetCompleteView" class="recovery-state" hidden><span class="state-mark" aria-hidden="true">✓</span><h3>You’re all set</h3><p>Your password has been updated. Sign in with your new password to continue.</p><button type="button" class="primary-button" id="resetCompleteBackBtn">Continue to sign in <span>→</span></button></div>
+                </section>
+                <div class="api-key-box" id="apiKeyBox" hidden><label for="apiKeyOutput">Your local access key</label><div class="api-key-row"><input id="apiKeyOutput" type="text" readonly><button type="button" id="copyApiKeyBtn">Copy</button></div></div>
+            </section>
+            <section class="view" id="workspaceView" hidden>
+                <div class="welcome-row"><div><p class="eyebrow">NEW QUESTION PAPER</p><h2>What are you studying today?</h2></div><div class="step-pill"><b>01</b> Source <i>→</i> <span>02 Generate</span></div></div>
+                <section class="source-panel panel"><div class="panel-heading"><div><h3>Bring in your study material</h3><p>Use a page, a PDF, or paste your notes directly.</p></div><span class="file-count" id="fileStatus">No source yet</span></div>
+                    <div class="source-tabs"><button class="source-tab active" data-source="text">Aa <span>Paste text</span></button><button class="source-tab" data-source="upload">↥ <span>Upload file</span></button></div>
+                    <div id="textSource" class="source-body"><textarea id="teluguInput" placeholder="Paste a chapter, lecture notes, or study material here..." rows="9"></textarea><div class="character-row"><span id="charCount">0 characters</span><button type="button" class="text-button" id="clearTextBtn">Clear</button></div></div>
+                    <div id="uploadSource" class="source-body" hidden><label class="dropzone" for="contentFile"><span class="upload-icon">↥</span><strong>Drop a PDF or image here</strong><span>or click to browse · PDF, PNG, JPG</span><input id="contentFile" type="file" accept=".pdf,image/png,image/jpeg,image/webp"></label><div id="uploadProgress" class="upload-progress" hidden>Extracting readable text…</div></div>
+                </section>
+                <section class="settings-panel panel"><div class="panel-heading"><div><h3>Shape your practice</h3><p>Choose what the AI should focus on.</p></div></div><div class="settings-grid"><label>Questions<select id="questionCount"><option value="5">5 questions</option><option value="10">10 questions</option><option value="20">20 questions</option><option value="30">30 questions</option></select></label><label>Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label><label>Question type<select id="questionType"><option value="mixed">Mixed</option><option value="mcq">Multiple choice</option><option value="true_false">True / False</option><option value="fill_blank">Fill in the blanks</option><option value="short_answer">Short answer</option></select></label><label>Answer key<select id="includeAnswers"><option value="true">Include answers</option><option value="false">Practice mode</option></select></label><label>Q&A language<select id="inputLang"><option value="auto">Match source language (auto-detect)</option><option value="en">English</option><option value="te">Telugu</option><option value="hi">Hindi</option><option value="ta">Tamil</option><option value="ml">Malayalam</option><option value="ka">Kannada</option></select></label></div><p class="settings-hint">Study material is translated when its language differs from your selected Q&amp;A language.</p><button id="processBtn" type="button" class="primary-button generate-button">Generate questions <span>✦</span></button></section>
+                <section class="translation-box" id="translationBox" hidden><h4>Live translation</h4><div id="translationOutput" class="translation-output"></div></section>
+                <section class="loading panel" id="loading" hidden><div class="spinner"></div><p>Reading your material and composing questions…</p></section>
+                <section class="results-section" id="resultsSection" hidden><div class="results-heading"><div><p class="eyebrow">QUESTION PAPER</p><h2>Your practice set</h2><p id="resultsMeta"></p></div><div class="result-actions"><button id="anotherBtn" class="secondary-button">↻ New set</button><button id="randomizeBtn" class="secondary-button">⤨ Shuffle</button><button id="printBtn" class="secondary-button">⤓ Print</button></div></div><div id="scorePanel" class="score-panel" hidden></div><div id="qaResults"></div><button id="submitPracticeBtn" class="primary-button submit-practice" hidden>Check my answers <span>→</span></button></section>
+                <div class="error" id="error" hidden></div>
+            </section>
+            <section class="view" id="historyView" hidden><div class="page-title"><p class="eyebrow">YOUR LIBRARY</p><h2>Question history</h2><p>Saved sets from this browser appear here for quick reuse.</p></div><div id="historyList" class="history-list"></div></section>
+            <section class="view" id="settingsView" hidden><div class="page-title"><p class="eyebrow">PREFERENCES</p><h2>Settings</h2><p>Manage your local study workspace.</p></div><div class="panel settings-note"><h3>Google AI connection</h3><p>Your Google API key stays on the server in <code>.env</code>. The browser only receives generated questions.</p><div class="model-status"><span></span> Server-side key configuration</div></div></section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
